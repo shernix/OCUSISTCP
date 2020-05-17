@@ -3,7 +3,11 @@ import socket
 host = ''
 port = 2304
 
-storedValue = "Hello World"
+status = "UNKNOWN"
+temp = 30 # Unit: Celsius
+pH = 7.6  
+lumin = 0.1 # Unit: Lux
+press =  4  # Unit: atm
 
 def setupServer():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,18 +23,36 @@ def setupServer():
     return s
 
 def setupConnection():
+    global status
     s.listen(1) # Only one connection at a time
     conn, address = s.accept()
     print("Connected to: " + address[0] + ":" + str(address[1]))
+    status = "OK"
     return conn
 
-def GET():
-    reply = storedValue
+def STATUS():
+    reply = status
     return reply
 
-def REPEAT(dataMessage):
-    reply = dataMessage[1]
-    return reply
+def GET(dataMessage):
+    request = dataMessage[1]
+    global temp
+    global pH
+    global lumin
+    global press
+
+    if request == 'TEMPERATURE':
+        reply = temp
+    elif request == 'PH':
+        reply = pH
+    elif request == 'LUMINOSITY':
+        reply = lumin
+    elif request == 'PRESSURE':
+        reply = press
+    else:
+        reply = "Unknown parameter"
+
+    return str(reply)
 
 def dataTransfer(conn):
     # Send/Recieve
@@ -41,10 +63,10 @@ def dataTransfer(conn):
         # Split data to separate the command 
         dataMessage = data.split(' ', 1)
         command = dataMessage[0] # command is the first segment
-        if command == 'GET':
-            reply = GET()
-        elif command == 'REPEAT':
-            reply = REPEAT(dataMessage)
+        if command == 'STATUS':
+            reply = STATUS()
+        elif command == 'GET':
+            reply = GET(dataMessage)
         elif command == 'EXIT':
             print("Client Exit")
             break
